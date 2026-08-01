@@ -84,6 +84,44 @@ sudo reboot                            # whole Pi; HA comes back on its own
 
 The container is `restart: unless-stopped` and the Docker service is enabled at boot, so Home Assistant starts automatically after a power cut. Nothing else needs to run at login — unlike the macOS setup, there is no LaunchAgent or user session involved.
 
+## Bluetooth: two conditions, not one
+
+The Pi has an onboard Bluetooth adapter (`hci0`) that `default_config` picks up — the macOS host had none, so this is specific to the Pi. If it isn't set up correctly, Home Assistant logs at every startup:
+
+```
+ERROR (MainThread) [habluetooth.manager] Missing required permissions for Bluetooth
+management. Automatic adapter recovery is unavailable. Add NET_ADMIN and NET_RAW
+capabilities to the container
+PermissionError: Missing NET_ADMIN/NET_RAW capabilities for Bluetooth management
+```
+
+The message only names the capabilities, but **both** of these are required, and each alone is insufficient:
+
+1. **`cap_add: [NET_ADMIN, NET_RAW]`** on the container (in `docker-compose.yml`).
+2. **The adapter powered on at the host** — `hciconfig hci0` must report `UP RUNNING`.
+
+Verified by elimination on this setup:
+
+| Capabilities | `hci0` | Result |
+|---|---|---|
+| none | DOWN | `PermissionError` |
+| `NET_ADMIN`+`NET_RAW` | DOWN | `PermissionError` |
+| none | UP | `PermissionError` |
+| `NET_ADMIN`+`NET_RAW` | UP | **clean** |
+
+With the adapter down, the capability check fails in a way that surfaces as a permissions error rather than as "adapter unavailable", which is what makes this misleading — it's easy to conclude the capabilities aren't working when the real missing piece is the radio being powered off.
+
+To make the adapter come up on its own after a reboot, `/etc/bluetooth/main.conf` has:
+
+```
+[Policy]
+AutoEnable=true
+```
+
+Check the state with `hciconfig hci0` and `systemctl is-active bluetooth`. If the adapter is soft-blocked, `sudo rfkill unblock bluetooth`.
+
+Note that under `network_mode: host`, `CAP_NET_ADMIN` lets the container reconfigure the host's network stack. That is a real privilege; it is granted here because Bluetooth works with it and the container is a trusted first-party image. If you never intend to use Bluetooth, dropping both capabilities and ignoring the discovered adapter in Settings → Devices & services is the lower-privilege alternative — the error is otherwise harmless and does not affect Zigbee.
+
 ## Secrets in `config/`
 
 `config/` is git-ignored and must stay that way. It contains, in cleartext:

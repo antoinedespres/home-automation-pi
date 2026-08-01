@@ -84,6 +84,44 @@ sudo reboot                            # tout le Pi ; HA revient tout seul
 
 Le conteneur est en `restart: unless-stopped` et le service Docker est activé au démarrage : Home Assistant redémarre donc automatiquement après une coupure de courant. Rien d'autre n'a besoin de se lancer à l'ouverture de session — contrairement à l'installation macOS, aucun LaunchAgent ni session utilisateur n'entre en jeu.
 
+## Bluetooth : deux conditions, pas une
+
+Le Pi possède un adaptateur Bluetooth intégré (`hci0`) que `default_config` détecte — le Mac n'en avait pas, c'est donc propre au Pi. S'il n'est pas configuré correctement, Home Assistant journalise à chaque démarrage :
+
+```
+ERROR (MainThread) [habluetooth.manager] Missing required permissions for Bluetooth
+management. Automatic adapter recovery is unavailable. Add NET_ADMIN and NET_RAW
+capabilities to the container
+PermissionError: Missing NET_ADMIN/NET_RAW capabilities for Bluetooth management
+```
+
+Le message ne cite que les capacités, mais **les deux** conditions suivantes sont nécessaires, et chacune seule est insuffisante :
+
+1. **`cap_add: [NET_ADMIN, NET_RAW]`** sur le conteneur (dans `docker-compose.yml`).
+2. **L'adaptateur allumé côté hôte** — `hciconfig hci0` doit afficher `UP RUNNING`.
+
+Vérifié par élimination sur cette installation :
+
+| Capacités | `hci0` | Résultat |
+|---|---|---|
+| aucune | DOWN | `PermissionError` |
+| `NET_ADMIN`+`NET_RAW` | DOWN | `PermissionError` |
+| aucune | UP | `PermissionError` |
+| `NET_ADMIN`+`NET_RAW` | UP | **propre** |
+
+Quand l'adaptateur est éteint, la vérification des capacités échoue d'une manière qui remonte comme une erreur de permissions plutôt que comme « adaptateur indisponible » : c'est ce qui rend le diagnostic trompeur. On conclut facilement que les capacités ne fonctionnent pas, alors que l'élément manquant est la radio non alimentée.
+
+Pour que l'adaptateur se rallume seul après un redémarrage, `/etc/bluetooth/main.conf` contient :
+
+```
+[Policy]
+AutoEnable=true
+```
+
+Vérifier l'état avec `hciconfig hci0` et `systemctl is-active bluetooth`. Si l'adaptateur est bloqué logiciellement : `sudo rfkill unblock bluetooth`.
+
+À noter qu'avec `network_mode: host`, `CAP_NET_ADMIN` permet au conteneur de reconfigurer la pile réseau de l'hôte. C'est un privilège réel ; il est accordé ici parce que le Bluetooth fonctionne avec, et que le conteneur est une image officielle de confiance. Si le Bluetooth ne doit jamais servir, retirer les deux capacités et ignorer l'adaptateur découvert dans Paramètres → Appareils et services est l'option la moins privilégiée — l'erreur est sinon inoffensive et n'affecte pas le Zigbee.
+
 ## Secrets dans `config/`
 
 `config/` est ignoré par git et doit le rester. Ce dossier contient, en clair :
