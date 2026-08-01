@@ -16,9 +16,10 @@ services:
       # The by-id path is stable across reboots and re-enumeration.
       - ${ZIGBEE_DEVICE}:/dev/ttyUSB0
     cap_add:
-      # The Pi has an onboard Bluetooth adapter, which default_config picks up.
-      # Without these, habluetooth cannot reset a wedged adapter and logs an
-      # error on every startup.
+      # Required by habluetooth for the Pi's onboard Bluetooth adapter.
+      # Note these are necessary but NOT sufficient: the adapter must also be
+      # powered on at the host (hci0 UP), or HA still raises a PermissionError.
+      # See docs/operations.md.
       - NET_ADMIN
       - NET_RAW
     environment:
