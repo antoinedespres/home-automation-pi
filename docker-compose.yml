@@ -1,0 +1,30 @@
+services:
+  homeassistant:
+    container_name: homeassistant
+    image: ghcr.io/home-assistant/home-assistant:stable
+    restart: unless-stopped
+    # Host networking is the recommended mode for Home Assistant on Linux:
+    # it lets local discovery protocols (mDNS/SSDP) reach the LAN, and makes
+    # HA see the real source IP of incoming requests (needed by trusted_proxies).
+    network_mode: host
+    volumes:
+      - ./config:/config
+      - /run/dbus:/run/dbus:ro
+      - /etc/localtime:/etc/localtime:ro
+    devices:
+      # Native USB passthrough: no ser2net bridge needed on Linux.
+      # The by-id path is stable across reboots and re-enumeration.
+      - ${ZIGBEE_DEVICE}:/dev/ttyUSB0
+    cap_add:
+      # The Pi has an onboard Bluetooth adapter, which default_config picks up.
+      # Without these, habluetooth cannot reset a wedged adapter and logs an
+      # error on every startup.
+      - NET_ADMIN
+      - NET_RAW
+    environment:
+      - TZ=${TZ:-Europe/Paris}
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
