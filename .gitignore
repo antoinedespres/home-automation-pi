@@ -1,0 +1,7 @@
+# Home Assistant runtime state: databases, secrets, auth tokens, device registry.
+# Never committed — contains credentials (secrets.yaml, .storage/auth, HACS token).
+config/
+
+.env
+.claude/
+.DS_Store
