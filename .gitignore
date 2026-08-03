@@ -2,6 +2,9 @@
 # Never committed — contains credentials (secrets.yaml, .storage/auth, HACS token).
 config/
 
+# Pi-hole runtime state: gravity DB, admin password hash, query log.
+pihole/
+
 .env
 .claude/
 .DS_Store
