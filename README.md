@@ -33,9 +33,9 @@ cd ~/home-automation
 ./scripts/setup.sh
 ```
 
-`scripts/setup.sh` is idempotent and does everything: installs Docker Engine if missing, generates `.env` (auto-detecting the dongle under `/dev/serial/by-id/`), installs the Zigbee reconnection watchdog, and starts the container.
+`scripts/setup.sh` is idempotent and does everything: installs Docker Engine if missing, generates `.env` (auto-detecting the dongle under `/dev/serial/by-id/`, generating a random Pi-hole admin password), installs the Zigbee reconnection watchdog, and starts both containers.
 
-Then open `http://<pi-ip>:8123`.
+Then open `http://<pi-ip>:8123` for Home Assistant and `http://<pi-ip>/admin` for Pi-hole.
 
 If this is a fresh install rather than a migration, follow the account-creation wizard and add the ZHA integration as described in [docs/zigbee-dongle-setup.md](docs/zigbee-dongle-setup.md).
 
@@ -50,6 +50,10 @@ The device is referenced by its `/dev/serial/by-id/` path, which is derived from
 See [docs/zigbee-dongle-setup.md](docs/zigbee-dongle-setup.md) for radio settings, pairing sensors, and testing link quality before mounting a sensor permanently.
 
 A watchdog restarts Home Assistant when the dongle is unplugged and replugged — ZHA's radio library does not reconnect on its own. On Linux this is a **udev rule** firing a systemd unit (`scripts/zigbee-recover.sh`) on the device's `add` event, rather than the 30-second polling LaunchAgent the macOS setup needed.
+
+## Pi-hole
+
+Network-wide DNS ad and tracker blocking, running as a second container. See [docs/pi-hole.md](docs/pi-hole.md) for setup, pointing devices (and Tailscale) at it, and how to toggle it on/off.
 
 ## Access from mobile
 
