@@ -5,8 +5,9 @@
 # Usage: ./scripts/pull-backup.sh [destination-dir]
 set -euo pipefail
 
-PI_HOST="${PI_HOST:-antoine@raspberrypi.local}"
-PI_DIR="${PI_DIR:-/home/antoine/home-automation}"
+# Override PI_HOST/PI_DIR if your user or clone path differs from the defaults.
+PI_HOST="${PI_HOST:-pi@raspberrypi.local}"
+PI_DIR="${PI_DIR:-/home/pi/home-automation}"
 DEST="${1:-$HOME/Backups/home-assistant}"
 
 mkdir -p "$DEST"

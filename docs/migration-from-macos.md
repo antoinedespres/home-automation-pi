@@ -47,7 +47,7 @@ sqlite3 config/home-assistant_v2.db "select count(*) from states;"
 rsync -a --stats \
   --exclude='.DS_Store' --exclude='home-assistant.log*' --exclude='.ha_run.lock' \
   --exclude='*.db-shm' --exclude='*.db-wal' --exclude='.storage/tmp*' \
-  config/ pi:/home/antoine/home-automation/config/
+  config/ pi:/home/pi/home-automation/config/
 ```
 
 `-shm`/`-wal` are rebuilt by SQLite; `.ha_run.lock` and the logs are per-host runtime noise.
