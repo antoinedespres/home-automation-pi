@@ -6,4 +6,5 @@ config/
 pihole/
 
 .env
+.claude/
 .DS_Store
