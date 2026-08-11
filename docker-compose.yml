@@ -45,6 +45,13 @@ services:
     environment:
       - TZ=${TZ:-Europe/Paris}
       - FTLCONF_webserver_api_password=${PIHOLE_PASSWORD}
+      # Answer queries that arrive over the VPN as well. dnsmasq defaults to
+      # listeningMode LOCAL, which only serves directly-attached subnets and
+      # silently ignores anything coming through the tunnel - that took DNS
+      # down for every remote peer after the v5 -> v6 migration reset the
+      # setting, while the container still reported healthy. Declared here
+      # rather than in pihole.toml so a :latest upgrade cannot drop it again.
+      - FTLCONF_dns_listeningMode=all
     volumes:
       - ./pihole/etc-pihole:/etc/pihole
       - ./pihole/etc-dnsmasq.d:/etc/dnsmasq.d
