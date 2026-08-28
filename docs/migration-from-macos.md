@@ -78,14 +78,9 @@ json.dump(d, open(p, "w"), indent=2)
 
 ### 4. Adjust `trusted_proxies`
 
-The macOS setup needed `192.168.65.1` — Docker Desktop's internal NAT gateway, which was the address HA actually saw incoming proxied requests coming from. With `network_mode: host` on Linux there is no NAT layer, so HA sees the VPS's real Tailscale address and that entry can go:
+The macOS setup needed `192.168.65.1` — Docker Desktop's internal NAT gateway, which was the address HA actually saw incoming proxied requests coming from. With `network_mode: host` on Linux there is no NAT layer, so HA sees the VPS's real Tailscale address and that entry can go.
 
-```yaml
-http:
-  use_x_forwarded_for: true
-  trusted_proxies:
-    - <vps-tailscale-ip>   # Tailscale IP of the VPS running Caddy
-```
+Set this from Settings > System > Network, not from `configuration.yaml`: since 2026.8 an `http:` block is migrated into `config/.storage/http` and then ignored, and leaving it in place raises a repair issue. Only the VPS's Tailscale IP (`<vps-tailscale-ip>`, the machine running Caddy) belongs in the trusted proxies list.
 
 ### 5. Start, and verify
 

@@ -52,14 +52,14 @@ Mobile --HTTPS--> home.example.com --> VPS (Caddy, reverse proxy)
    ```
    Then `sudo systemctl reload caddy`. Caddy requests and renews the certificate itself.
 
-5. **Trust the proxy in Home Assistant** — `config/configuration.yaml`:
-   ```yaml
-   http:
-     use_x_forwarded_for: true
-     trusted_proxies:
-       - <vps-tailscale-ip>
-   ```
-   Then `docker compose restart homeassistant`.
+5. **Trust the proxy in Home Assistant** — Settings > System > Network, under
+   "Home Assistant URL": enable the reverse-proxy option and add the VPS's
+   Tailscale IP to the trusted proxies list. No restart needed.
+
+   > Since 2026.8 this is UI-only state, stored in `config/.storage/http`. An
+   > `http:` block in `configuration.yaml` is migrated once and then ignored,
+   > and HA raises a repair issue until it is removed — it stops working
+   > outright in 2027.2. Don't re-add it.
 
 ## Why the Pi needs one fewer `trusted_proxies` entry than the Mac did
 

@@ -78,14 +78,9 @@ json.dump(d, open(p, "w"), indent=2)
 
 ### 4. Ajuster `trusted_proxies`
 
-L'installation macOS nécessitait `192.168.65.1` — la passerelle NAT interne de Docker Desktop, l'adresse depuis laquelle HA voyait réellement arriver les requêtes du reverse proxy. Avec `network_mode: host` sous Linux, il n'y a plus de couche NAT : HA voit l'adresse Tailscale réelle du VPS et cette entrée peut disparaître :
+L'installation macOS nécessitait `192.168.65.1` — la passerelle NAT interne de Docker Desktop, l'adresse depuis laquelle HA voyait réellement arriver les requêtes du reverse proxy. Avec `network_mode: host` sous Linux, il n'y a plus de couche NAT : HA voit l'adresse Tailscale réelle du VPS et cette entrée peut disparaître.
 
-```yaml
-http:
-  use_x_forwarded_for: true
-  trusted_proxies:
-    - <ip-tailscale-du-vps>   # IP Tailscale du VPS qui fait tourner Caddy
-```
+Ce réglage se fait depuis Paramètres > Système > Réseau, pas dans `configuration.yaml` : depuis la version 2026.8, un bloc `http:` est migré vers `config/.storage/http` puis ignoré, et le laisser en place déclenche une réparation. Seule l'IP Tailscale du VPS (`<ip-tailscale-du-vps>`, la machine qui fait tourner Caddy) a sa place dans la liste des proxys de confiance.
 
 ### 5. Démarrer, et vérifier
 
